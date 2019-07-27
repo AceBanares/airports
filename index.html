@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Type Ahead 👀</title>
+  <title>️✈ Airport Search ️✈</title>
   <style>
     html {
       box-sizing: border-box;
@@ -75,7 +75,7 @@
       background: linear-gradient(to top, #ffffff 0%, #efefef 100%);
     }
     
-    span.population {
+    span.code {
       font-size: 15px;
     }
     
@@ -95,16 +95,48 @@
   </form>
   <script>
     const ENDPOINT = "http://gist.githubusercontent.com/tdreyno/4278655/raw/7b0762c09b519f40397e4c3e100b097d861f5588/airports.json"
-    const typeAhead = {
-      endpoint: ENDPOINT,
-      async request() {
-        const response = await fetch(this.endpoint);
-        const json = await response.json();
-        return json;
-      },
-      findMatches(keyword) {
+    const airports = [];
+    extractData(ENDPOINT, airports);
 
-      }    
+    const searchBar = document.querySelector('.search');
+    const suggestions = document.querySelector('.suggestions');
+    searchBar.addEventListener('keyup', displayMatches);
+
+    async function extractData(source, destination) {
+      const json = await (await fetch(source)).json();
+      destination.push(...json);
+      Object.freeze(destination);
+    }
+
+    function findMatches(keyword = null) {
+      const regex = new RegExp(keyword, 'ig');
+      return airports.filter(airport => {
+        const {
+          name,
+          city,
+          code
+        } = airport;
+        return name.match(regex) || city.match(regex) || code.match(regex);
+      });
+    }
+
+    function displayMatches() {
+      const keyword = this.value || null;
+      const matches = findMatches(keyword);
+      const html = matches.map(match => {
+        const {
+          name,
+          city,
+          code
+        } = match;
+        const regex = new RegExp(keyword, 'ig');
+        const dispName = name.replace(regex, `<span class="hl">${keyword}</span>`);
+        const dispCity = city.replace(regex, `<span class="hl">${keyword}</span>`);
+        const dispCode = code.replace(regex, `<span class="hl">${keyword}</span>`);
+        return `<li><span class="name">${dispName}, ${dispCity}</span>
+        <span class="code">${dispCode}</span></li>`;
+      }).join('');
+      suggestions.innerHTML = html;
     }
   </script>
 </body>
